@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine; 
 namespace Seasons {
    
     public static class SeasonChanger {
         // Used to know if it's ok to make certain objects collidable
          public static Season realSeason = Season.Summer;
+         static Dictionary<string, Material> matCache = new Dictionary<string, Material>();
         public static LeavesKind SeasonLeavesKind(Season season) 
         {
             switch (season) {
@@ -58,6 +60,7 @@ namespace Seasons {
             
             for (int i = 0; i < tree.transform.childCount; i++) {
                 GameObject child = tree.transform.GetChild(i).gameObject;
+                Debug.Log(child.name);
                 if (child.name.Contains("smallleaves") && !child.name.Contains("disabled")) {
                     ChangeLeaves(child, season);
                 }
@@ -77,6 +80,7 @@ namespace Seasons {
         {
             for (int i =0; i < treehouse.transform.childCount; i++) {
                 GameObject child = treehouse.transform.GetChild(i).gameObject;
+                Debug.Log(child.name);
                 if (child.name == "Treehouse") {
                     ChangeWintryObject(child, season, "objects/forest/materials/redpanel", 1);
                     
@@ -101,35 +105,35 @@ namespace Seasons {
                     ChangeBrownPanelObject(child, season);
             }
         }
-        public static void ChangeWintryObject(GameObject wintryObject, Season season, string matPath, int winterIndex) 
+        static Material LoadMaterial(string path) {
+            if (!matCache.ContainsKey(path))
+                matCache.Add(path, Resources.Load<Material>(path));
+            return matCache[path];
+            
+        }
+        public static void ChangeWintryObject(GameObject wintryObject, Season season, string matPath, int winterIndex = 1) 
         {
             if (SnowyTrees(season)) 
             {
-                wintryObject.GetComponent<MeshRenderer>().materials[winterIndex] = Resources.Load<Material>("objects/forest/materials/pitgroundwinter");
+                wintryObject.GetComponent<Renderer>().materials[winterIndex] = LoadMaterial("objects/forest/materials/pitgroundwinter");
             } else 
             {
-                wintryObject.GetComponent<MeshRenderer>().materials[winterIndex] = Resources.Load<Material>(matPath);
+                wintryObject.GetComponent<Renderer>().materials[winterIndex] = LoadMaterial(matPath);
             }
         }
-        public static void ChangeBrownPanelObject(GameObject panel, Season season) 
+        public static void ChangeBrownPanelObject(GameObject panel, Season season, int winterIndex = 0) 
         {
-            ChangeBrownPanelObject(panel, season, 0);
+            ChangeWintryObject(panel, season, "objects/forest/materials/darkbrownpanel", winterIndex);
         }
-        public static void ChangeBrownPanelObject(GameObject panel, Season season, int winterIndex) 
+        public static void ChangeBarkyObject(GameObject barkyObject, Season season, int winterIndex = 1) 
         {
-            ChangeWintryObject(panel, season, "/objects/forest/materials/darkbrownpanel", winterIndex);
-        }
-        public static void ChangeBarkyObject(GameObject barkyObject, Season season) 
-        {
-            ChangeWintryObject(barkyObject, season, "objects/treeroom/materials/bark", 1);
+            ChangeWintryObject(barkyObject, season, "objects/treeroom/materials/bark", winterIndex);
         }
         public static void ChangeRamp(GameObject ramp, Season season) 
         {
-            for (int i =0; i < ramp.transform.childCount; i++) {
-                GameObject child = ramp.transform.GetChild(i).gameObject;
-                if (child.name == "Ramp") {
-                    ChangeBrownPanelObject(child, season);
-                }
+            GameObject realRamp = ramp.transform.Find("Ramp").gameObject;
+            if (realRamp != null) {
+                ChangeBrownPanelObject(realRamp, season);
             }
         }
         public static void SetSeason(Season season) 
@@ -149,9 +153,10 @@ namespace Seasons {
                 ChangeTreehouse(treehouseParent, season);
             }
             GameObject forest = GameObject.Find("Level/Forest");
+            Debug.Log(forest);
             if (forest != null) 
             {
-                forest.GetComponent<MeshRenderer>().materials[0] = Resources.Load<Material>(FloorMaterialPath(season));
+                forest.GetComponent<Renderer>().materials[0] = LoadMaterial(FloorMaterialPath(season));
                 for (int i = 0; i < forest.transform.childCount; i++) 
                 {
                     GameObject child = forest.transform.GetChild(i).gameObject;
@@ -232,7 +237,7 @@ namespace Seasons {
             if (snow != null)
                 SetChristmasLayerRecursive(snow);
         }
-        public static void ChangeLeaves(GameObject leaves, Season season, bool useRedLeaves) 
+        public static void ChangeLeaves(GameObject leaves, Season season, bool useRedLeaves = false) 
         {
             try {
                 if (leaves == null)
@@ -241,20 +246,20 @@ namespace Seasons {
             {
                 case LeavesKind.Green: 
                     leaves.SetActive(true);
-                    MeshRenderer render = leaves.GetComponent<MeshRenderer>();
+                    Renderer render = leaves.GetComponent<Renderer>();
                     if (render == null) return;
-                    render.materials[0] = Resources.Load<Material>("objects/forest/materials/leaves");
+                    render.materials[0] = LoadMaterial("objects/forest/materials/leaves");
                     break;
                 case LeavesKind.Orange: 
                     leaves.SetActive(true);
-                    MeshRenderer render2 = leaves.GetComponent<MeshRenderer>();
+                    Renderer render2 = leaves.GetComponent<Renderer>();
                     if (render2 == null) return;
                     if (useRedLeaves) 
                     {
-                        render2.materials[0] = Resources.Load<Material>("objects/forest/materials/fallleavesred");
+                        render2.materials[0] = LoadMaterial("objects/forest/materials/fallleavesred");
                     } else 
                     {
-                        render2.materials[0] = Resources.Load<Material>("objects/forest/materials/fallleaves");
+                        render2.materials[0] = LoadMaterial("objects/forest/materials/fallleaves");
                     }
                     
                     break;
@@ -268,9 +273,6 @@ namespace Seasons {
                 Debug.Log($"ow {e.ToString()}");
             }
             
-        }
-        public static void ChangeLeaves(GameObject leaves, Season season) {
-            ChangeLeaves(leaves, season, false);
         }
     } 
 
