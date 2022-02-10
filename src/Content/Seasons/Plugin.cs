@@ -15,13 +15,12 @@ namespace Seasons
 	[BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
 	public class Plugin : BaseUnityPlugin
 	{
-		bool inRoom;
+		public static bool inRoom;
 
 		void OnEnable() {
 			/* Set up your mod here */
 			/* Code here runs at the start and whenever your mod is enabled*/
 
-			HarmonyPatches.ApplyHarmonyPatches();
 			Utilla.Events.GameInitialized += OnGameInitialized;
 		}
 
@@ -29,8 +28,6 @@ namespace Seasons
 			/* Undo mod setup here */
 			/* This provides support for toggling mods with ComputerInterface, please implement it :) */
 			/* Code here runs whenever your mod is disabled (including if it disabled on startup)*/
-
-			HarmonyPatches.RemoveHarmonyPatches();
 			Utilla.Events.GameInitialized -= OnGameInitialized;
 		}
 
@@ -79,6 +76,7 @@ namespace Seasons
 			/* This code will run regardless of if the mod is enabled*/
 
 			inRoom = false;
+			SeasonChanger.SetSeason(SeasonSettings.season);
 		}
 	}
 }
