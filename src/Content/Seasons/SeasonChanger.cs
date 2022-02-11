@@ -5,10 +5,22 @@ namespace Seasons {
    
     public static class SeasonChanger {
         // Used to know if it's ok to make certain objects collidable
+        // not really used outside of non modded rooms
          public static Season realSeason = Season.Summer;
          static Dictionary<string, Material> matCache = new Dictionary<string, Material>();
+        
+        public static Season SelectedSeason(Season season) {
+            switch (season) {
+                case Season.None: 
+                    return realSeason;
+                default: 
+                    return season;
+            }
+        }
         public static LeavesKind SeasonLeavesKind(Season season) 
         {
+            if (!SeasonSettings.showLeaves && Plugin.inRoom)
+                return LeavesKind.None;
             switch (season) {
                 case Season.Summer:
                     return LeavesKind.Green;
@@ -27,6 +39,20 @@ namespace Seasons {
                 return true;
             return false;
         }
+        // persona 4 golden best rpg
+        // snowflakes falling, on your face
+        // a cold wind blows away
+        // the laughter from this treasured palce
+        // but in our memories it stays
+        // this is where we say farewell
+        // and the wind, it feels a little colder now
+        // Here time's run out like a spell,
+        // but laughter's our vow
+        // this is where we saw it through
+        // thick and thin - this friendship it was built to last
+        // here we swore that we'd be true
+        // to bonds that were forged in our past
+        // top ten emotional songs that will make you cry
         public static bool SnowyTrees(Season season) 
         {
             switch (season) {
@@ -60,7 +86,6 @@ namespace Seasons {
             
             for (int i = 0; i < tree.transform.childCount; i++) {
                 GameObject child = tree.transform.GetChild(i).gameObject;
-                Debug.Log(child.name);
                 if (child.name.Contains("smallleaves") && !child.name.Contains("disabled")) {
                     ChangeLeaves(child, season);
                 }
@@ -73,6 +98,10 @@ namespace Seasons {
                 if (child.name.Contains("flatpanel")) {
                     ChangePanel(child, season);
                 }
+                if (child.name.Contains("whitetreelights")) {
+                    child.SetActive(season == Season.Christmas);
+                    SetCollidable(child, season == Season.Christmas && Plugin.inRoom);
+                }
             } 
             
         }
@@ -80,7 +109,6 @@ namespace Seasons {
         {
             for (int i =0; i < treehouse.transform.childCount; i++) {
                 GameObject child = treehouse.transform.GetChild(i).gameObject;
-                Debug.Log(child.name);
                 if (child.name == "Treehouse") {
                     ChangeWintryObject(child, season, "objects/forest/materials/redpanel", 1);
                     
@@ -93,6 +121,10 @@ namespace Seasons {
                 }
                 if (child.name.Contains("Leaf Particles")) {
                     child.SetActive(FallTreeParticles(season));
+                }
+                if ((Plugin.inRoom || realSeason == Season.Christmas) && child.name.Contains("whitetreelights")) {
+                    child.SetActive(season == Season.Christmas);
+                    SetCollidable(child, season == Season.Christmas);
                 }
             }
         }
@@ -109,16 +141,22 @@ namespace Seasons {
             if (!matCache.ContainsKey(path))
                 matCache.Add(path, Resources.Load<Material>(path));
             return matCache[path];
-            
+        }
+        static void SetMaterial(Renderer renderer, Material material, int index) {
+            Material[] mats = renderer.materials;
+            mats[index] = material;
+            renderer.materials = mats;
         }
         public static void ChangeWintryObject(GameObject wintryObject, Season season, string matPath, int winterIndex = 1) 
         {
+            Renderer wintryRenderer = wintryObject.GetComponent<Renderer>();
             if (SnowyTrees(season)) 
             {
-                wintryObject.GetComponent<Renderer>().materials[winterIndex] = LoadMaterial("objects/forest/materials/pitgroundwinter");
+                SetMaterial(wintryRenderer, LoadMaterial("objects/forest/materials/pitgroundwinter"), winterIndex);
+
             } else 
             {
-                wintryObject.GetComponent<Renderer>().materials[winterIndex] = LoadMaterial(matPath);
+               SetMaterial(wintryRenderer, LoadMaterial(matPath), winterIndex);
             }
         }
         public static void ChangeBrownPanelObject(GameObject panel, Season season, int winterIndex = 0) 
@@ -136,8 +174,9 @@ namespace Seasons {
                 ChangeBrownPanelObject(realRamp, season);
             }
         }
-        public static void SetSeason(Season season) 
+        public static void SetSeason(Season selSeason) 
         {
+            Season season = SelectedSeason(selSeason);
             GameObject smallTrees = GameObject.Find("Level/Forest/SmallTrees");
             if (smallTrees != null) 
             {
@@ -156,11 +195,12 @@ namespace Seasons {
             Debug.Log(forest);
             if (forest != null) 
             {
-                forest.GetComponent<Renderer>().materials[0] = LoadMaterial(FloorMaterialPath(season));
+                Debug.Log(season);
+                SetMaterial(forest.GetComponent<Renderer>(), LoadMaterial(FloorMaterialPath(season)), 0);
+            
                 for (int i = 0; i < forest.transform.childCount; i++) 
                 {
                     GameObject child = forest.transform.GetChild(i).gameObject;
-                    Debug.Log(child.name);
                     if (child.name.Contains("flatpanel")) 
                     {
                         ChangePanel(child, season);
@@ -178,7 +218,7 @@ namespace Seasons {
             GameObject tree = GameObject.Find("Level/treeroom/tree/Tree");
             if (tree != null) 
             {
-                ChangeBarkyObject(tree, season);
+                ChangeBarkyObject(tree, season, 2);
             }
             GameObject treeRamp = GameObject.Find("Level/Forest/longbranch/ramp");
             if (treeRamp != null) 
@@ -192,16 +232,17 @@ namespace Seasons {
             }
             ChangeSnowman(season);
         }
+        public static void SetCollidable(GameObject obj, bool collidable) {
+            if (collidable) 
+                obj.layer = 9;
+            else 
+                obj.layer = 0;
+        }
         public static void SetChristmasLayerRecursive(GameObject obj) 
         {
             for (int i = 0; i < obj.transform.childCount; i++) {
                 GameObject child = obj.transform.GetChild(i).gameObject;
-            
-                if ((Plugin.inRoom || realSeason == Season.Christmas) && !child.name.Contains("christmastreewhitelights")) {
-                    child.layer = 9;
-                } else {
-                    child.layer = 1;
-                }
+                SetCollidable(child, (Plugin.inRoom || realSeason == Season.Christmas) && !child.name.Contains("christmastreewhitelights"));
                 SetChristmasLayerRecursive(child);
             }
         }
@@ -211,13 +252,8 @@ namespace Seasons {
             switch (season) {
                 case Season.Winter: 
                     // Modded rooms don't care about collision
-                    if (!Plugin.inRoom && realSeason != Season.Winter) 
-                    {
-                        snowman.SetActive(false);
-                    } else 
-                    {
-                        snowman.SetActive(true);
-                    }
+                    snowman.SetActive(true);
+                    SetCollidable(snowman, Plugin.inRoom || realSeason == Season.Winter);
                     break;
                 default: 
                     if (!Plugin.inRoom && realSeason == Season.Winter) 
@@ -248,7 +284,7 @@ namespace Seasons {
                     leaves.SetActive(true);
                     Renderer render = leaves.GetComponent<Renderer>();
                     if (render == null) return;
-                    render.materials[0] = LoadMaterial("objects/forest/materials/leaves");
+                    render.material = LoadMaterial("objects/forest/materials/leaves");
                     break;
                 case LeavesKind.Orange: 
                     leaves.SetActive(true);
@@ -256,10 +292,10 @@ namespace Seasons {
                     if (render2 == null) return;
                     if (useRedLeaves) 
                     {
-                        render2.materials[0] = LoadMaterial("objects/forest/materials/fallleavesred");
+                        render2.material = LoadMaterial("objects/forest/materials/fallleavesred");
                     } else 
                     {
-                        render2.materials[0] = LoadMaterial("objects/forest/materials/fallleaves");
+                        render2.material= LoadMaterial("objects/forest/materials/fallleaves");
                     }
                     
                     break;
@@ -283,6 +319,7 @@ namespace Seasons {
     }
 
     public enum Season {
+        None,
         Summer, 
         Winter,
         Fall,

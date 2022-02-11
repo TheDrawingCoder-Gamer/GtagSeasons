@@ -48,7 +48,7 @@ namespace Seasons
 			if (leavesParticles.activeInHierarchy) {
 				SeasonChanger.realSeason = Season.Fall;
 			}
-			SeasonChanger.SetSeason(SeasonSettings.season);
+			// SeasonChanger.SetSeason(SeasonSettings.season);
 			
 		}
 
@@ -76,7 +76,7 @@ namespace Seasons
 			/* This code will run regardless of if the mod is enabled*/
 
 			inRoom = false;
-			SeasonChanger.SetSeason(SeasonSettings.season);
+			SeasonChanger.SetSeason(Season.None);
 		}
 	}
 }
