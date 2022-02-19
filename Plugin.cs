@@ -36,16 +36,16 @@ namespace Seasons
 			/* Code here runs after the game initializes (i.e. GorillaLocomotion.Player.Instance != null) */
 			SeasonSettings.Deserialize();
 			SeasonChanger.realSeason = Season.Summer;
-			GameObject snowman = GameObject.Find("Level/Forest/snowman");
-			if (snowman.activeInHierarchy) {
+			GameObject snowman = GameObject.Find("Level/forest/snowman");
+			if (snowman?.activeInHierarchy == true) {
 				SeasonChanger.realSeason = Season.Winter;
 			}
-			GameObject snow = GameObject.Find("Level/Forest/snow");
-			if (snow.activeInHierarchy) {
+			GameObject snow = GameObject.Find("Level/forest/snow");
+			if (snow?.activeInHierarchy == true) {
 				SeasonChanger.realSeason = Season.Christmas;
 			}
-			GameObject leavesParticles = GameObject.Find("Level/Forest/SmallTreeWithTreehouse/Leaf Particles (19)");
-			if (leavesParticles.activeInHierarchy) {
+			GameObject leavesParticles = GameObject.Find("Level/forest/SmallTreeWithTreehouse/Leaf Particles (19)");
+			if (leavesParticles?.activeInHierarchy == true) {
 				SeasonChanger.realSeason = Season.Fall;
 			}
 			// SeasonChanger.SetSeason(SeasonSettings.season);
